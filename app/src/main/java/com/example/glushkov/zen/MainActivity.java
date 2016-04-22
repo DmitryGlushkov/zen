@@ -11,6 +11,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        final Figure2 figure2 = (Figure2) findViewById(R.id.figure2);
+
+        findViewById(R.id.ivBtnStart).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                figure2.startRotate();
+            }
+        });
         //setContentView(R.layout.activity_main_test);
         //this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         /*this.getWindow().getDecorView().setSystemUiVisibility(

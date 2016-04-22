@@ -7,8 +7,13 @@ import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.View;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Figure2 extends View {
 
@@ -89,7 +94,7 @@ public class Figure2 extends View {
         pointsInt[2] = getCenterPoint(pointsExt[4], pointsExt[0]);
 
         // Внутренний треугольник BIG: 0 - 2 - 4 - 0
-        innerTr  = new Path();
+        innerTr = new Path();
         innerTr.moveTo(pointsExt[0].x, pointsExt[0].y);
         innerTr.lineTo(pointsExt[2].x, pointsExt[2].y);
         innerTr.lineTo(pointsExt[4].x, pointsExt[4].y);
@@ -113,7 +118,7 @@ public class Figure2 extends View {
         super.onDraw(canvas);
 
         // Центральная точка
-        canvas.drawCircle(pCenter.x, pCenter.y, dotRadius, paint);
+        //canvas.drawCircle(pCenter.x, pCenter.y, dotRadius, paint);
 
         // Точки контура
         for (Point p : pointsExt) {
@@ -134,17 +139,59 @@ public class Figure2 extends View {
             }
         }
 
-
         canvas.drawPath(innerTr, paintDot);
 
         canvas.drawPath(innerTrMini, paintDot);
 
     }
 
-    private Point getCenterPoint(Point a, Point b){
+    private Point getCenterPoint(Point a, Point b) {
         Point p = new Point();
         p.x = (a.x + b.x) / 2;
         p.y = (a.y + b.y) / 2;
         return p;
+    }
+
+    Handler uiHandler = new Handler(Looper.getMainLooper());
+    float percent = 0.5f;
+
+
+    public void startRotate() {
+        final LinearFunction lf_4_0 = new LinearFunction(pointsExt[4], pointsExt[0]);
+        final LinearFunction lf_0_2 = new LinearFunction(pointsExt[0], pointsExt[2]);
+        final LinearFunction lf_2_4 = new LinearFunction(pointsExt[2], pointsExt[4]);
+        Timer mTimer = new Timer();
+        mTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                pointsInt[2] = lf_4_0.getNextPoint(pointsInt[2]);
+                pointsInt[0] = lf_0_2.getNextPoint(pointsInt[0]);
+                pointsInt[1] = lf_2_4.getNextPoint(pointsInt[1]);
+                postInvalidate();
+            }
+        }, 0, 50);
+    }
+
+    class LinearFunction {
+
+        public float K;
+        public float B;
+
+        private Point pointA, pointB;
+
+        public LinearFunction(Point pointA, Point pointB) {
+            this.pointA = pointA;
+            this.pointB = pointB;
+            // y = k * x + b
+            K = ((float) (pointB.y - pointA.y)) / ((float) (pointB.x - pointA.x));
+            B = (float) pointA.y - K * (float) pointA.x;
+        }
+
+        public Point getNextPoint(Point startPoint) {
+            int newX = startPoint.x + 1;
+            if (newX > pointB.x) newX = pointA.x;
+            int newY = (int) (K * newX + B);
+            return new Point(newX, newY);
+        }
     }
 }

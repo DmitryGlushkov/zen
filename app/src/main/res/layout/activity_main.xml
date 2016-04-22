@@ -5,7 +5,7 @@
     android:background="@color/grey_50">
 
     <ImageButton
-        android:id="@+id/imageView"
+        android:id="@+id/ivBtnStart"
         android:background="@drawable/round_ripple_1"
         android:layout_width="50dp"
         android:layout_height="50dp"
@@ -14,6 +14,7 @@
         android:layout_marginTop="50dp" />
 
     <com.example.glushkov.zen.Figure2
+        android:id="@+id/figure2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
