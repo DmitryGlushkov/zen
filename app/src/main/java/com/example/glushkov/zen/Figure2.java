@@ -7,8 +7,6 @@ import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -27,6 +25,7 @@ public class Figure2 extends View {
     int screenWidth, screenHeight;
     int edgeMargin = 40;    // dp
     int dotRadius = 3;      // dp
+    float deltaX_percent = 0.005f;
 
     Path innerTr, innerTrMini;
 
@@ -102,10 +101,10 @@ public class Figure2 extends View {
 
         // Внутренний треугольник MINI: 0int - 1int - 2int
         innerTrMini = new Path();
-        innerTr.moveTo(pointsInt[0].x, pointsInt[0].y);
-        innerTr.lineTo(pointsInt[1].x, pointsInt[1].y);
-        innerTr.lineTo(pointsInt[2].x, pointsInt[2].y);
-        innerTr.lineTo(pointsInt[0].x, pointsInt[0].y);
+        innerTrMini.moveTo(pointsInt[0].x, pointsInt[0].y);
+        innerTrMini.lineTo(pointsInt[1].x, pointsInt[1].y);
+        innerTrMini.lineTo(pointsInt[2].x, pointsInt[2].y);
+        innerTrMini.lineTo(pointsInt[0].x, pointsInt[0].y);
 
     }
 
@@ -152,24 +151,29 @@ public class Figure2 extends View {
         return p;
     }
 
-    Handler uiHandler = new Handler(Looper.getMainLooper());
-    float percent = 0.5f;
-
-
     public void startRotate() {
+
         final LinearFunction lf_4_0 = new LinearFunction(pointsExt[4], pointsExt[0]);
         final LinearFunction lf_0_2 = new LinearFunction(pointsExt[0], pointsExt[2]);
-        final LinearFunction lf_2_4 = new LinearFunction(pointsExt[2], pointsExt[4]);
+        final LinearFunction lf_4_2 = new LinearFunction(pointsExt[4], pointsExt[2]);
+
         Timer mTimer = new Timer();
         mTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                pointsInt[2] = lf_4_0.getNextPoint(pointsInt[2]);
-                pointsInt[0] = lf_0_2.getNextPoint(pointsInt[0]);
-                pointsInt[1] = lf_2_4.getNextPoint(pointsInt[1]);
+                pointsInt[2] = lf_4_0.getNextPointIncr(pointsInt[2]);
+                pointsInt[0] = lf_0_2.getNextPointIncr(pointsInt[0]);
+                pointsInt[1] = lf_4_2.getNextPointDecr(pointsInt[1]);
+                // inner tr
+                innerTrMini.rewind();
+                innerTrMini.moveTo(pointsInt[0].x, pointsInt[0].y);
+                innerTrMini.lineTo(pointsInt[1].x, pointsInt[1].y);
+                innerTrMini.lineTo(pointsInt[2].x, pointsInt[2].y);
+                innerTrMini.lineTo(pointsInt[0].x, pointsInt[0].y);
+
                 postInvalidate();
             }
-        }, 0, 50);
+        }, 0, 10);
     }
 
     class LinearFunction {
@@ -179,18 +183,44 @@ public class Figure2 extends View {
 
         private Point pointA, pointB;
 
+        private float deltaX;
+
         public LinearFunction(Point pointA, Point pointB) {
             this.pointA = pointA;
             this.pointB = pointB;
             // y = k * x + b
             K = ((float) (pointB.y - pointA.y)) / ((float) (pointB.x - pointA.x));
             B = (float) pointA.y - K * (float) pointA.x;
+            // ***
+            deltaX = deltaX_percent * (pointB.x - pointA.x);
+            System.out.println("deltaX: "+deltaX);
         }
 
-        public Point getNextPoint(Point startPoint) {
-            int newX = startPoint.x + 1;
+        public Point getNextPointIncr(Point startPoint) {
+            int newY;
+            //int newX = startPoint.x + 1;
+            int newX = (int) ((float) startPoint.x + deltaX);
             if (newX > pointB.x) newX = pointA.x;
-            int newY = (int) (K * newX + B);
+            // Проверка К на ноль
+            if (Math.abs(K) == 0) {
+                newY = (int) (B);
+            } else {
+                newY = (int) (K * newX + B);
+            }
+            return new Point(newX, newY);
+        }
+
+        public Point getNextPointDecr(Point startPoint) {
+            int newY;
+            //int newX = startPoint.x - 1;
+            int newX = (int) ((float) startPoint.x - deltaX);
+            if (newX < pointA.x) newX = pointB.x;
+            // Проверка К на ноль
+            if (Math.abs(K) == 0) {
+                newY = (int) (B);
+            } else {
+                newY = (int) (K * newX + B);
+            }
             return new Point(newX, newY);
         }
     }
