@@ -25,7 +25,7 @@ public class Figure2 extends View {
     int screenWidth, screenHeight;
     int edgeMargin = 40;    // dp
     int dotRadius = 3;      // dp
-    float deltaX_percent = 0.005f;
+
 
     Path innerTr, innerTrMini;
 
@@ -77,7 +77,11 @@ public class Figure2 extends View {
 
     }
 
+    LinearFunction lf_4_0, lf_0_2, lf_4_2;
+
     private void setPointsAndElements() {
+
+        // Точки контура шестиугольника
 
         pointsExt[0] = new Point(pCenter.x, pCenter.y - R);
         pointsExt[3] = new Point(pCenter.x, pCenter.y + R);
@@ -88,9 +92,17 @@ public class Figure2 extends View {
         pointsExt[2] = new Point(pCenter.x + r, pCenter.y + (R / 2));
         pointsExt[4] = new Point(pCenter.x - r, pCenter.y + (R / 2));
 
-        pointsInt[0] = getCenterPoint(pointsExt[0], pointsExt[2]);
-        pointsInt[1] = getCenterPoint(pointsExt[2], pointsExt[4]);
-        pointsInt[2] = getCenterPoint(pointsExt[4], pointsExt[0]);
+        // Функции прямых внутреннего большего треугольника
+
+        lf_4_0 = new LinearFunction(pointsExt[4], pointsExt[0]);
+        lf_0_2 = new LinearFunction(pointsExt[0], pointsExt[2]);
+        lf_4_2 = new LinearFunction(pointsExt[4], pointsExt[2]);
+
+        // Точки внутреннего треугольника, располагаются в центе ребер большего треугольника
+
+        pointsInt[0] = lf_0_2.centerPoint;
+        pointsInt[1] = lf_4_2.centerPoint;
+        pointsInt[2] = lf_4_0.centerPoint;
 
         // Внутренний треугольник BIG: 0 - 2 - 4 - 0
         innerTr = new Path();
@@ -144,26 +156,18 @@ public class Figure2 extends View {
 
     }
 
-    private Point getCenterPoint(Point a, Point b) {
-        Point p = new Point();
-        p.x = (a.x + b.x) / 2;
-        p.y = (a.y + b.y) / 2;
-        return p;
-    }
 
     public void startRotate() {
-
-        final LinearFunction lf_4_0 = new LinearFunction(pointsExt[4], pointsExt[0]);
-        final LinearFunction lf_0_2 = new LinearFunction(pointsExt[0], pointsExt[2]);
-        final LinearFunction lf_4_2 = new LinearFunction(pointsExt[4], pointsExt[2]);
 
         Timer mTimer = new Timer();
         mTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                pointsInt[2] = lf_4_0.getNextPointIncr(pointsInt[2]);
-                pointsInt[0] = lf_0_2.getNextPointIncr(pointsInt[0]);
-                pointsInt[1] = lf_4_2.getNextPointDecr(pointsInt[1]);
+
+                pointsInt[0] = lf_0_2.getNextPointIncr();
+                pointsInt[2] = lf_4_0.getNextPointIncr();
+                pointsInt[1] = lf_4_2.getNextPointDecr();
+
                 // inner tr
                 innerTrMini.rewind();
                 innerTrMini.moveTo(pointsInt[0].x, pointsInt[0].y);
@@ -172,56 +176,87 @@ public class Figure2 extends View {
                 innerTrMini.lineTo(pointsInt[0].x, pointsInt[0].y);
 
                 postInvalidate();
+
             }
         }, 0, 10);
     }
 
     class LinearFunction {
 
+        public static final int STEP_COUNT = 100;
+
         public float K;
         public float B;
 
-        private Point pointA, pointB;
+        public Point pointA, pointB, centerPoint;
 
-        private float deltaX;
+        private Point currentPoint = null;
 
-        public LinearFunction(Point pointA, Point pointB) {
+        private float deltaX, deltaX_step;
+
+        int lastStep = -1;
+
+        public LinearFunction(Point pointA, Point pointB) { // y = k * x + b
+
             this.pointA = pointA;
             this.pointB = pointB;
-            // y = k * x + b
+
             K = ((float) (pointB.y - pointA.y)) / ((float) (pointB.x - pointA.x));
             B = (float) pointA.y - K * (float) pointA.x;
-            // ***
-            deltaX = deltaX_percent * (pointB.x - pointA.x);
-            System.out.println("deltaX: "+deltaX);
+
+            centerPoint = getCenterPoint(pointA, pointB);
+
+            deltaX = pointB.x - pointA.x;
+
+            if (deltaX < 0) throw new RuntimeException("deltaX less than zero !");
+
+            deltaX_step = deltaX / (float) STEP_COUNT;
         }
 
-        public Point getNextPointIncr(Point startPoint) {
-            int newY;
-            //int newX = startPoint.x + 1;
-            int newX = (int) ((float) startPoint.x + deltaX);
-            if (newX > pointB.x) newX = pointA.x;
-            // Проверка К на ноль
+        public Point getNextPointIncr() {
+            lastStep++;
+            if (lastStep > STEP_COUNT) lastStep = 0;
+            return calcCurrentPoint();
+        }
+
+        public Point getNextPointDecr() {
+            lastStep--;
+            if (lastStep < 0) lastStep = STEP_COUNT;
+            return calcCurrentPoint();
+        }
+
+        private Point calcCurrentPoint(){
+
+            // start check
+            if (currentPoint == null) {
+                currentPoint = centerPoint;
+                lastStep = STEP_COUNT / 2;
+                return currentPoint;
+            }
+
+            int newY, newX;
+            // get new X
+            newX = (int) ((float) pointA.x + (deltaX_step * lastStep));
+            // get new Y
             if (Math.abs(K) == 0) {
                 newY = (int) (B);
             } else {
                 newY = (int) (K * newX + B);
             }
-            return new Point(newX, newY);
+
+            currentPoint.x = newX;
+            currentPoint.y = newY;
+
+            return currentPoint;
         }
 
-        public Point getNextPointDecr(Point startPoint) {
-            int newY;
-            //int newX = startPoint.x - 1;
-            int newX = (int) ((float) startPoint.x - deltaX);
-            if (newX < pointA.x) newX = pointB.x;
-            // Проверка К на ноль
-            if (Math.abs(K) == 0) {
-                newY = (int) (B);
-            } else {
-                newY = (int) (K * newX + B);
-            }
-            return new Point(newX, newY);
+
+
+        private Point getCenterPoint(Point a, Point b) {
+            Point p = new Point();
+            p.x = (a.x + b.x) / 2;
+            p.y = (a.y + b.y) / 2;
+            return p;
         }
     }
 }
