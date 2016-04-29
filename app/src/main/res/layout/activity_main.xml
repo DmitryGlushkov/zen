@@ -6,16 +6,76 @@
 
     <ImageButton
         android:id="@+id/ivBtnStart"
-        android:background="@drawable/round_ripple_1"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:elevation="5dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp" />
+        android:layout_marginTop="50dp"
+        android:background="@drawable/round_ripple_1"
+        android:elevation="@dimen/_elevation" />
 
     <com.example.glushkov.zen.Figure2
         android:id="@+id/figure2"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="76dp"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/cbState_1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_radio_white_1"
+            android:button="@null"
+            android:gravity="center"
+            android:text="."
+            android:textColor="@android:color/black"
+            android:textSize="12dp" />
+
+        <CheckBox
+            android:id="@+id/cbState_2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_radio_white_1"
+            android:button="@null"
+            android:gravity="center"
+            android:text=":"
+            android:textColor="@android:color/black"
+            android:textSize="12dp" />
+
+        <CheckBox
+            android:id="@+id/cbState_3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_radio_white_1"
+            android:button="@null"
+            android:gravity="center"
+            android:text=".:"
+            android:textColor="@android:color/black"
+            android:textSize="12dp" />
+
+        <CheckBox
+            android:id="@+id/cbState_4"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_radio_white_1"
+            android:button="@null"
+            android:gravity="center"
+            android:text="::"
+            android:textColor="@android:color/black"
+            android:textSize="12dp" />
+    </LinearLayout>
 
 </RelativeLayout>
